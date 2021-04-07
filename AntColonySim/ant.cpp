@@ -7,7 +7,7 @@
 #include "food.h"
 #include "pheromone.h"
 
-extern FoodVect foods;
+extern FoodPileVect food_piles;
 extern PheromoneList pheromones;
 extern Vector2D home_pos;
 
@@ -31,10 +31,11 @@ void Ant::Init()
 void Ant::Update(double dt)
 {
 	if (!IsState(AntState::AS_CARRY_FOOD)) {
-		for (unsigned i = 0; i < foods.size(); ++i) {					// Sense nearby food.
-			if (foods[i].pos.Distance2(pos) < SENSOR_RADIUS_2) {
+		for (unsigned i = 0; i < food_piles.size(); ++i) {				// Sense nearby food.
+			if (food_piles[i].CheckCollision(pos)) {
 				ChangeState(AntState::AS_CARRY_FOOD);					// Change state.
-				foods.erase(foods.begin() + i);							// Remove food from world.
+				if (food_piles[i].IsEmpty())
+					food_piles.erase(food_piles.begin() + i);			// Remove food pile from world.
 				break;
 			}
 		}
@@ -45,14 +46,14 @@ void Ant::Update(double dt)
 		}
 	}
 
-	Vector2D pherom_f;														// Update pheromone state.
+	Vector2D pherom_f;													// Update pheromone state.
 	if (pheromone_update_time > PHEROMONE_UPDATE_TIME) {
 		pheromone_update_time = 0;
 
 		Vector2D norm = Vector2D::Normalize(velocity);
 		for (PheromoneList::const_iterator p = pheromones.begin(); p != pheromones.end(); ++p) {
-			if (pos.Distance2(p->pos) < SENSOR_RADIUS_2) {					// Sense nearby pheromone
-				Vector2D p_dir = p->pos - pos;								// Check pheromone direction.
+			if (pos.Distance2(p->pos) < SENSOR_RADIUS_2) {				// Sense nearby pheromone
+				Vector2D p_dir = p->pos - pos;							// Check pheromone direction.
 				if (norm.Dot(p_dir) < 0)
 					continue;
 
@@ -61,7 +62,7 @@ void Ant::Update(double dt)
 			}
 		}
 		if (IsState(AntState::AS_CARRY_FOOD)) {							// Drop pheromones.
-			Pheromone pherom(-SENSOR_RADIUS * Vector2D::Normalize(velocity) + pos);
+			Pheromone pherom(Vector2D::Normalize(velocity) + pos);
 			pheromones.push_back(pherom);
 		}
 

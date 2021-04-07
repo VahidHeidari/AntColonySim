@@ -1,5 +1,7 @@
 #include "graphics.h"
 
+#include <algorithm>
+
 #include <SDL.h>
 
 #include "ant.h"
@@ -167,6 +169,11 @@ void DrawFood(const Food& p)
 	SDL_RenderFillRect(renderer, &food_rect);
 	SetDrawColor(0, 255, 127);
 	SDL_RenderDrawRect(renderer, &food_rect);
+}
+
+void DrawFoodPile(const FoodPile& fp)
+{
+	std::for_each(fp.foods.begin(), fp.foods.end(), [&](const auto& f) { DrawFood(f); });
 }
 
 void DrawHome(const Vector2D& home_pos)

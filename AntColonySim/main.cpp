@@ -21,7 +21,7 @@ double simulation_time = 0.0;
 double simulation_speed = 1.0;
 
 AntVect ants;
-FoodVect foods;
+FoodPileVect food_piles;
 PheromoneList pheromones;
 Vector2D home_pos(HOME_X, HOME_Y);
 
@@ -52,7 +52,7 @@ void DrawGraphics()
 	DrawBorder();													// Draw world border.
 
 	DrawHome(home_pos);												// Draw home.
-	std::for_each(foods.begin(), foods.end(), [&](const auto& f) { DrawFood(f); });	// Draw foods
+	std::for_each(food_piles.begin(), food_piles.end(), [&](const auto& f) { DrawFoodPile(f); });	// Draw foods
 
 	std::for_each(pheromones.begin(), pheromones.end(), [&](const auto& p) { DrawPheromone(p); });	// Draw pheromones.
 
@@ -77,8 +77,9 @@ bool SaveState(const char* out_path = "LastState.txt")
 
 	// foods
 	out_file << "# Foods:" << std::endl;
-	for (unsigned i = 0; i < foods.size(); ++i)
-		out_file << "food pos " << foods[i].pos << std::endl;
+	for (unsigned i = 0; i < food_piles.size(); ++i)
+		for (unsigned j = 0; j < food_piles[i].foods.size(); ++j)
+			out_file << "food pos " << food_piles[i].foods[j].pos << std::endl;
 	out_file << std::endl;
 
 	// Ants
@@ -100,11 +101,8 @@ bool SaveState(const char* out_path = "LastState.txt")
 
 void PutFoodPile(int x, int y, int width=10, int height=10)
 {
-	for (int j = 0; j < height; ++j)
-		for (int i = 0; i < height; ++i) {
-			Food f(x + (i * FOOD_HEIGHT), y + (j * FOOD_WIDTH));
-			foods.push_back(f);
-		}
+	FoodPile fp(x, y, width, height);
+	food_piles.push_back(fp);
 }
 
 int main(int argc, char** argv)
@@ -134,8 +132,9 @@ int main(int argc, char** argv)
 	Ant ant(HOME_X, HOME_Y);
 	ants.resize(NUM_ANTS, ant);
 
-	PutFoodPile(BORDER_MARGIN * 3, BORDER_MARGIN * 3);
-	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 5, BORDER_MARGIN * 3);
+	PutFoodPile(BORDER_MARGIN * 3, BORDER_MARGIN * 3, 20, 20);
+	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 8, BORDER_MARGIN * 3, 20, 20);
+	PutFoodPile(BORDER_MARGIN * 3, WINDOW_HEIGHT - BORDER_MARGIN * 7, 20, 20);
 
 	while (!is_finished) {												// Run simulation loop.
 		HandelInputs();													// Read user inputs.
