@@ -3,10 +3,10 @@ This is a very simple ant colony simulator :)
  Keys
 ------
 
-S -> Simulation speed
-T -> Drawing trails
-D -> Drawing sensing area
-Escape -> Quit
+* S -> Simulation speed
+* T -> Drawing trails
+* D -> Drawing sensing area
+* Escape -> Quit
 
 
  Screenshots
