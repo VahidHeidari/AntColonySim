@@ -6,6 +6,7 @@
 
 #include "ant.h"
 #include "constants.h"
+#include "font.h"
 #include "food.h"
 #include "pheromone.h"
 
@@ -25,8 +26,6 @@ static SDL_Rect pheromone_rect;
 
 bool is_draw_debugs = false;
 bool is_draw_trails = false;
-
-
 
 bool InitGraphics()
 {
@@ -112,15 +111,14 @@ void DrawAnt(const Ant& a)
 {
 	// Draw body.
 	if (is_draw_debugs) {
-		ant_rect.x = static_cast<int>(a.pos.x - SENSOR_RADIUS / 2);
-		ant_rect.y = static_cast<int>(a.pos.y - SENSOR_RADIUS / 2);
+		int px = static_cast<int>(a.pos.x);
+		int py = static_cast<int>(a.pos.y);
+
 		SetDrawColor(10, 10, 128);
-		SDL_RenderFillRect(renderer, &ant_rect);
+		DrawCircle(px, py, static_cast<int>(SENSOR_RADIUS));
 
 		// Draw velocity vector.
 		Vector2D v = a.velocity + a.pos;
-		int px = static_cast<int>(a.pos.x);
-		int py = static_cast<int>(a.pos.y);
 		int vx = static_cast<int>(v.x);
 		int vy = static_cast<int>(v.y);
 		SetDrawColor(255, 0, 0);
@@ -178,14 +176,12 @@ void DrawFoodPile(const FoodPile& fp)
 
 void DrawHome(const Vector2D& home_pos)
 {
-	SDL_Rect home_rect = {
-		static_cast<int>(home_pos.x - SENSOR_RADIUS / 2),
-		static_cast<int>(home_pos.y - SENSOR_RADIUS / 2),
-		static_cast<int>(SENSOR_RADIUS),
-		static_cast<int>(SENSOR_RADIUS),
-	};
+	int hx = static_cast<int>(HOME_X);
+	int hy = static_cast<int>(HOME_Y);
 	SetDrawColor(0, 127, 255);
-	SDL_RenderFillRect(renderer, &home_rect);
+	DrawFillCircle(hx, hy, static_cast<int>(SENSOR_RADIUS));
+	SetDrawColor(0, 0, 0);
+	SDL_RenderDrawPoint(renderer, hx, hy);
 }
 
 void DrawPheromone(const Pheromone& p)
@@ -200,4 +196,81 @@ void DrawPheromone(const Pheromone& p)
 		static_cast<int>(g),
 		static_cast<int>(b));
 	SDL_RenderFillRect(renderer, &pheromone_rect);
+}
+
+void DrawCircle(int cx, int cy, int r)
+{
+	int x = r - 1, y = 0;
+	int e = 0;
+	int r2 = r * r;
+	while (y <= x) {
+		SDL_RenderDrawPoint(renderer, cx + x, cy + y);
+		SDL_RenderDrawPoint(renderer, cx + y, cy + x);
+		SDL_RenderDrawPoint(renderer, cx + x, cy - y);
+		SDL_RenderDrawPoint(renderer, cx + y, cy - x);
+		SDL_RenderDrawPoint(renderer, cx - x, cy + y);
+		SDL_RenderDrawPoint(renderer, cx - y, cy + x);
+		SDL_RenderDrawPoint(renderer, cx - x, cy - y);
+		SDL_RenderDrawPoint(renderer, cx - y, cy - x);
+
+		e = r2 - (x * x) - x - (y * y) - y;
+		e *= 2;
+		if (e < 0)
+			--x;
+		y += 1;
+	}
+}
+
+void DrawFillCircle(int cx, int cy, int r)
+{
+
+	int x = r - 1, y = 0;
+	int e = 0;
+	int r2 = r * r;
+	while (y <= x) {
+		SDL_RenderDrawLine(renderer, cx + x, cy + y, cx - x, cy + y);
+		SDL_RenderDrawLine(renderer, cx + x, cy - y, cx - x, cy - y);
+		SDL_RenderDrawLine(renderer, cx + y, cy + x, cx - y, cy + x);
+		SDL_RenderDrawLine(renderer, cx + y, cy - x, cx - y, cy - x);
+
+		e = r2 - (x * x) - x - (y * y) - y;
+		e *= 2;
+		if (e < 0)
+			--x;
+		y += 1;
+	}
+}
+
+void DrawString(const char* msg, int x, int y)
+{
+	int sx = x;
+	for (; *msg != '\0'; ++msg) {
+		if (*msg == '\n') {
+			y += FONT_HEIGHT + 1;
+			sx = x;
+			continue;
+		}
+
+		if (*msg == '\r') {
+			sx = x;
+			continue;
+		}
+
+		if (*msg == ' ') {
+			sx += FONT_WIDTH + 1;
+			continue;
+		}
+
+		int idx = (*msg - ' ') * FONT_WIDTH;
+		for (int j = 0; j < FONT_HEIGHT; ++j)
+			for (int i = 0; i < FONT_WIDTH; ++i)
+				if (font[idx + i] & (0x02 << j))
+					SDL_RenderDrawPoint(renderer, sx + i, y + j);
+		sx += FONT_WIDTH + 1;
+	}
+}
+
+void DrawString(const std::string& msg, int x, int y)
+{
+	DrawString(msg.c_str(), x, y);
 }

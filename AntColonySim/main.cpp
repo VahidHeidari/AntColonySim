@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <sstream>
 #include <vector>
 
 #include <SDL_timer.h>
@@ -15,6 +16,7 @@
 
 extern bool is_draw_debugs;
 extern bool is_draw_trails;
+extern bool is_draw_ant_numbers;
 
 bool is_finished = false;
 double simulation_time = 0.0;
@@ -33,7 +35,7 @@ void UpdateWorld()
 		for (unsigned i = 0; i < ants.size(); ++i)					// Update ants.
 			ants[i].Update(TIME_STEP);
 
-		PheromoneList::iterator p = pheromones.begin();				// Update pheromones.
+		for (PheromoneList::iterator p = pheromones.begin(); p != pheromones.end();)	// Update pheromones.
 		while (p != pheromones.end()) {
 			PheromoneList::iterator next = p;
 			++next;
@@ -52,12 +54,30 @@ void DrawGraphics()
 	DrawBorder();													// Draw world border.
 
 	DrawHome(home_pos);												// Draw home.
-	std::for_each(food_piles.begin(), food_piles.end(), [&](const auto& f) { DrawFoodPile(f); });	// Draw foods
+	int num_foods = 0;
+	std::for_each(food_piles.begin(), food_piles.end(), [&](const auto& f) {	// Draw foods
+		DrawFoodPile(f);
+		num_foods += f.foods.size();
+	});
 
 	std::for_each(pheromones.begin(), pheromones.end(), [&](const auto& p) { DrawPheromone(p); });	// Draw pheromones.
 
-	for (unsigned i = 0; i < ants.size(); ++i)						// Draw ants.
+	for (unsigned i = 0; i < ants.size(); ++i) {					// Draw ants.
 		DrawAnt(ants[i]);
+		if (is_draw_ant_numbers) {
+			SetDrawColor(255, 255, 255);
+			DrawString(std::to_string(i + 1),
+				static_cast<int>(ants[i].pos.x),
+				static_cast<int>(ants[i].pos.y));
+		}
+	}
+
+	SetDrawColor(255, 255, 255);									// Draw HUD.
+	std::ostringstream oss;
+	oss << "Speed     : " << simulation_speed << 'x' << std::endl;
+	oss << "Time      : " << static_cast<int>(simulation_time) << std::endl;
+	oss << "Num foods : " << num_foods << std::endl;
+	DrawString(oss.str(), 10, 10);
 	UpdateScreen();
 }
 
@@ -115,6 +135,8 @@ int main(int argc, char** argv)
 			is_draw_debugs = true;
 		else if (strcmp(argv[i], "-t") == 0)
 			is_draw_trails = true;
+		else if (strcmp(argv[i], "-n") == 0)
+			is_draw_ant_numbers = true;
 	}
 	std::cout << std::endl;
 
@@ -133,8 +155,9 @@ int main(int argc, char** argv)
 	ants.resize(NUM_ANTS, ant);
 
 	PutFoodPile(BORDER_MARGIN * 3, BORDER_MARGIN * 3, 20, 20);
-	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 8, BORDER_MARGIN * 3, 20, 20);
+	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 7, BORDER_MARGIN * 3, 20, 20);
 	PutFoodPile(BORDER_MARGIN * 3, WINDOW_HEIGHT - BORDER_MARGIN * 7, 20, 20);
+	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 7, WINDOW_HEIGHT - BORDER_MARGIN * 7, 20, 20);
 
 	while (!is_finished) {												// Run simulation loop.
 		HandelInputs();													// Read user inputs.
