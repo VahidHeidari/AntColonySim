@@ -24,7 +24,8 @@ static SDL_Rect ant_rect;
 static SDL_Rect food_rect;
 static SDL_Rect pheromone_rect;
 
-bool is_draw_debugs = false;
+bool is_draw_debugs_circle = false;
+bool is_draw_debugs_bounding_box = false;
 bool is_draw_trails = false;
 
 bool InitGraphics()
@@ -109,12 +110,12 @@ void DrawBorder()
 
 void DrawAnt(const Ant& a)
 {
-	// Draw body.
-	if (is_draw_debugs) {
-		int px = static_cast<int>(a.pos.x);
-		int py = static_cast<int>(a.pos.y);
+	int px = static_cast<int>(a.pos.x);
+	int py = static_cast<int>(a.pos.y);
 
-		SetDrawColor(10, 10, 128);
+	// Draw sensor circle.
+	if (is_draw_debugs_circle) {
+		SetDrawColor(127, 127, 255);
 		DrawCircle(px, py, static_cast<int>(SENSOR_RADIUS));
 
 		// Draw velocity vector.
@@ -123,6 +124,15 @@ void DrawAnt(const Ant& a)
 		int vy = static_cast<int>(v.y);
 		SetDrawColor(255, 0, 0);
 		SDL_RenderDrawLine(renderer, px, py, vx, vy);
+	}
+
+	// Draw sensor bounding box.
+	if (is_draw_debugs_bounding_box) {
+		SetDrawColor(0, 255, 255);
+		ant_rect.x = px - static_cast<int>(SENSOR_RADIUS);
+		ant_rect.y = py - static_cast<int>(SENSOR_RADIUS);
+		ant_rect.w = ant_rect.h = static_cast<int>(SENSOR_RADIUS * 2.0);
+		SDL_RenderDrawRect(renderer, &ant_rect);
 	}
 
 	// Draw trail.
@@ -149,12 +159,12 @@ void DrawAnt(const Ant& a)
 		{ static_cast<int>(lft.x),   static_cast<int>(lft.y) },
 		{ static_cast<int>(tip.x),   static_cast<int>(tip.y) },
 		{ static_cast<int>(rht.x),   static_cast<int>(rht.y) },
-		{ static_cast<int>(a.pos.x), static_cast<int>(a.pos.y) },
+		{ px, py },
 		{ static_cast<int>(lft.x),   static_cast<int>(lft.y) },
 	};
 	switch (a.state) {
-	case AntState::AS_WANDER:		SetDrawColor(10, 128, 128); break;
 	case AntState::AS_CARRY_FOOD:	SetDrawColor(128, 200, 0); break;
+	case AntState::AS_WANDER:		SetDrawColor(10, 128, 128); break;
 	}
 	SDL_RenderDrawLines(renderer, pts, 5);
 }
@@ -200,9 +210,7 @@ void DrawPheromone(const Pheromone& p)
 
 void DrawCircle(int cx, int cy, int r)
 {
-	int x = r - 1, y = 0;
-	int e = 0;
-	int r2 = r * r;
+	int x = r, y = 0, r2 = r * r;
 	while (y <= x) {
 		SDL_RenderDrawPoint(renderer, cx + x, cy + y);
 		SDL_RenderDrawPoint(renderer, cx + y, cy + x);
@@ -213,9 +221,8 @@ void DrawCircle(int cx, int cy, int r)
 		SDL_RenderDrawPoint(renderer, cx - x, cy - y);
 		SDL_RenderDrawPoint(renderer, cx - y, cy - x);
 
-		e = r2 - (x * x) - x - (y * y) - y;
-		e *= 2;
-		if (e < 0)
+		int e = 2 * ((x * x) + (y * y) - r2 + (2 * y + 1)) + (1 - 2 * x);
+		if (e > 0)
 			--x;
 		y += 1;
 	}
@@ -223,19 +230,15 @@ void DrawCircle(int cx, int cy, int r)
 
 void DrawFillCircle(int cx, int cy, int r)
 {
-
-	int x = r - 1, y = 0;
-	int e = 0;
-	int r2 = r * r;
+	int x = r, y = 0, r2 = r * r;
 	while (y <= x) {
 		SDL_RenderDrawLine(renderer, cx + x, cy + y, cx - x, cy + y);
 		SDL_RenderDrawLine(renderer, cx + x, cy - y, cx - x, cy - y);
 		SDL_RenderDrawLine(renderer, cx + y, cy + x, cx - y, cy + x);
 		SDL_RenderDrawLine(renderer, cx + y, cy - x, cx - y, cy - x);
 
-		e = r2 - (x * x) - x - (y * y) - y;
-		e *= 2;
-		if (e < 0)
+		int e = 2 * ((x * x) + (y * y) - r2 + (2 * y + 1)) + (1 + 2 * x);
+		if (e > 0)
 			--x;
 		y += 1;
 	}

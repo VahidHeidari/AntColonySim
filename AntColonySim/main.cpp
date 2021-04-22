@@ -24,45 +24,38 @@ double simulation_speed = 1.0;
 
 AntVect ants;
 FoodPileVect food_piles;
-PheromoneList pheromones;
+PheromoneGrid pheromones_grid;
 Vector2D home_pos(HOME_X, HOME_Y);
 
 
 
 void UpdateWorld()
 {
-	for (double s = 0.0; s + TIME_STEP < simulation_speed; s += TIME_STEP) {
-		for (unsigned i = 0; i < ants.size(); ++i)					// Update ants.
+	int n = 0;
+	for (double s = 0.0; s < simulation_speed; s += TIME_STEP, ++n) {
+		for (unsigned i = 0; i < ants.size(); ++i)						// Update ants.
 			ants[i].Update(TIME_STEP);
 
-		for (PheromoneList::iterator p = pheromones.begin(); p != pheromones.end();)	// Update pheromones.
-		while (p != pheromones.end()) {
-			PheromoneList::iterator next = p;
-			++next;
-			p->Update(TIME_STEP);
-			if (p->strength < 0)
-				pheromones.erase(p);
-			p = next;
-		}
-		simulation_time += TIME_STEP;								// Update simulation time.
+		pheromones_grid.Update(TIME_STEP);								// Update pheromones.
+		simulation_time += TIME_STEP;									// Update simulation time.
 	}
 }
 
 void DrawGraphics()
 {
-	ClearBackground();												// Clear background
-	DrawBorder();													// Draw world border.
+	ClearBackground();													// Clear background
+	DrawBorder();														// Draw world border.
 
-	DrawHome(home_pos);												// Draw home.
+	DrawHome(home_pos);													// Draw home.
 	int num_foods = 0;
 	std::for_each(food_piles.begin(), food_piles.end(), [&](const auto& f) {	// Draw foods
 		DrawFoodPile(f);
 		num_foods += f.foods.size();
 	});
 
-	std::for_each(pheromones.begin(), pheromones.end(), [&](const auto& p) { DrawPheromone(p); });	// Draw pheromones.
+	pheromones_grid.Draw();												// Draw pheromones.
 
-	for (unsigned i = 0; i < ants.size(); ++i) {					// Draw ants.
+	for (unsigned i = 0; i < ants.size(); ++i) {						// Draw ants.
 		DrawAnt(ants[i]);
 		if (is_draw_ant_numbers) {
 			SetDrawColor(255, 255, 255);
@@ -72,7 +65,7 @@ void DrawGraphics()
 		}
 	}
 
-	SetDrawColor(255, 255, 255);									// Draw HUD.
+	SetDrawColor(255, 255, 255);										// Draw HUD.
 	std::ostringstream oss;
 	oss << "Speed     : " << simulation_speed << 'x' << std::endl;
 	oss << "Time      : " << static_cast<int>(simulation_time) << std::endl;
@@ -112,10 +105,10 @@ bool SaveState(const char* out_path = "LastState.txt")
 	out_file << std::endl;
 
 	out_file << "# Pheromones:" << std::endl;
-	std::for_each(pheromones.begin(), pheromones.end(), [&](const auto& p) {
-		out_file << "pheromone strength " << p.strength
-			<< " pos " << p.pos << std::endl;
-	});
+	//std::for_each(pheromones.begin(), pheromones.end(), [&](const auto& p) {
+	//	out_file << "pheromone strength " << p.strength
+	//		<< " pos " << p.pos << std::endl;
+	//});
 	return true;
 }
 
@@ -150,7 +143,7 @@ int main(int argc, char** argv)
 		return 2;
 	}
 
-	// Read outputs of previous simulation for initializing new one.
+	// TODO: Read outputs of previous simulation for initializing new one.
 	Ant ant(HOME_X, HOME_Y);
 	ants.resize(NUM_ANTS, ant);
 
@@ -158,6 +151,8 @@ int main(int argc, char** argv)
 	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 7, BORDER_MARGIN * 3, 20, 20);
 	PutFoodPile(BORDER_MARGIN * 3, WINDOW_HEIGHT - BORDER_MARGIN * 7, 20, 20);
 	PutFoodPile(WINDOW_WIDTH - BORDER_MARGIN * 7, WINDOW_HEIGHT - BORDER_MARGIN * 7, 20, 20);
+
+	pheromones_grid.Init(WINDOW_HEIGHT / CELL_HEIGHT_PX + 1, WINDOW_WIDTH / CELL_WIDTH_PX + 1);
 
 	while (!is_finished) {												// Run simulation loop.
 		HandelInputs();													// Read user inputs.

@@ -4,7 +4,8 @@ This is a very simple ant colony simulator :)
 ------
 
 * A -> Pause/Unpause simulation
-* D -> Toggle drawing sensing area
+* B -> Toggle drawing sensing bounding box
+* D -> Toggle drawing sensing circle
 * Escape -> Quit
 * N -> Toggle drawing ant numbers
 * S -> Simulation speed

@@ -8,7 +8,7 @@
 #include "pheromone.h"
 
 extern FoodPileVect food_piles;
-extern PheromoneList pheromones;
+extern PheromoneGrid pheromones_grid;
 extern Vector2D home_pos;
 
 std::random_device rd;
@@ -22,12 +22,12 @@ void Ant::Init()
 	force_update_time = FORCE_UPDATE_TIME;
 	trail_update_time = 0.0;
 	pheromone_update_time = 0.0;
-	mass = DEFAULT_ANT_MASS;
+	mass = ANT_MASS;
 	pos.Init();
 	velocity.Init();
 	acceleration.Init();
 }
-#include <iostream>
+
 void Ant::Update(double dt)
 {
 	if (!IsState(AntState::AS_CARRY_FOOD)) {
@@ -50,20 +50,22 @@ void Ant::Update(double dt)
 	if (pheromone_update_time > PHEROMONE_UPDATE_TIME) {
 		pheromone_update_time = 0;
 
-		Vector2D norm = Vector2D::Normalize(velocity);
-		for (PheromoneList::const_iterator p = pheromones.begin(); p != pheromones.end(); ++p) {
-			if (pos.Distance2(p->pos) < SENSOR_RADIUS_2) {				// Sense nearby pheromone
-				Vector2D p_dir = p->pos - pos;							// Check pheromone direction.
-				if (norm.Dot(p_dir) < 0)
-					continue;
+		const PheromoneList* pheromones = pheromones_grid.GetNearByPheromoneList(pos);
+		if (pheromones) {
+			for (PheromoneList::const_iterator p = pheromones->begin(); p != pheromones->end(); ++p) {
+				if (pos.Distance2(p->pos) < SENSOR_RADIUS_2) {			// Sense nearby pheromone
+					Vector2D p_dir = p->pos - pos;						// Check pheromone direction.
+					if (velocity.Dot(p_dir) < 0)
+						continue;
 
-				Vector2D pherom_dir = (p->pos - pos).Normalize();
-				pherom_f = pherom_f + pherom_dir.Multiply(IsState(AntState::AS_CARRY_FOOD) ? 0.2 : 5.2);
+					Vector2D pherom_dir = (p->pos - pos).Normalize();
+					pherom_f = pherom_f + pherom_dir.Multiply(IsState(AntState::AS_CARRY_FOOD) ? 0.2 : 5.2);
+				}
 			}
 		}
 		if (IsState(AntState::AS_CARRY_FOOD)) {							// Drop pheromones.
 			Pheromone pherom(Vector2D::Normalize(velocity) + pos);
-			pheromones.push_back(pherom);
+			pheromones_grid.AddPheromone(pherom);
 		}
 
 		pherom_f.Normalize();

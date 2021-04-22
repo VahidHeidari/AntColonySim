@@ -7,6 +7,7 @@
 extern bool is_finished;
 extern double simulation_speed;
 extern bool is_draw_debugs;
+extern bool is_draw_debugs_bounding_box;
 extern bool is_draw_trails;
 
 bool is_draw_ant_numbers = false;
@@ -53,6 +54,10 @@ void HandelInputs()
 					simulation_speed = 0.0;
 				else
 					simulation_speed = 1.0;
+				break;
+
+			case SDLK_b:
+				is_draw_debugs_bounding_box ^= true;
 				break;
 
 			case SDLK_d:
