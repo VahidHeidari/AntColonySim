@@ -14,7 +14,8 @@
 #include "inputs.h"
 #include "pheromone.h"
 
-extern bool is_draw_debugs;
+extern bool is_draw_debugs_circle;
+extern bool is_draw_debugs_bounding_box;
 extern bool is_draw_trails;
 extern bool is_draw_ant_numbers;
 
@@ -84,7 +85,8 @@ bool SaveState(const char* out_path = "LastState.txt")
 	out_file << "# Simulation parameters:" << std::endl;
 	out_file << "simulation_tim " << simulation_time << std::endl;
 	out_file << "simulation_speed " << simulation_speed << std::endl;
-	out_file << "is_draw_debugs " << std::boolalpha << is_draw_debugs << std::endl;
+	out_file << "is_draw_debugs_circle " << std::boolalpha << is_draw_debugs_circle << std::endl;
+	out_file << "is_draw_debugs_circle_bounding_box " << std::boolalpha << is_draw_debugs_bounding_box << std::endl;
 	out_file << "is_draw_trails " << std::boolalpha << is_draw_trails << std::endl;
 	out_file << std::endl;
 
@@ -125,7 +127,9 @@ int main(int argc, char** argv)
 		std::cout << "    argv[" << i << "] : " << argv[i] << std::endl;
 
 		if (strcmp(argv[i], "-d") == 0)
-			is_draw_debugs = true;
+			is_draw_debugs_circle = true;
+		if (strcmp(argv[i], "-b") == 0)
+			is_draw_debugs_bounding_box = true;
 		else if (strcmp(argv[i], "-t") == 0)
 			is_draw_trails = true;
 		else if (strcmp(argv[i], "-n") == 0)
